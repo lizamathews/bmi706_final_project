@@ -76,8 +76,8 @@ else:
 
 # The cancer filter
 cancer_default = 'Breast, unspecified'
-cancer_filter = st.selectbox(label = 'Cancer', options = subset['Cause of death'].unique()) 
-#index = np.where(subset['Cause of death'].unique() == cancer_default)[0][0].item())
+cancer_filter = st.selectbox(label = 'Cancer', options = subset['Cause of death'].unique(),
+                             index = np.where(subset['Cause of death'].unique() == cancer_default)[0][0].item())
 # Subset the dataframe for the cancer of interest
 subset = subset[subset['Cause of death'] == cancer_filter]
 
