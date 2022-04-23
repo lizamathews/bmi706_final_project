@@ -95,7 +95,7 @@ chart = alt.Chart(lc_dat).mark_line().encode(
     #color=alt.Color("Rate:Q", scale=alt.Scale(type='log', domain=(0.01,1000), clamp=True), title="Mortality #rate per 100k"),
     #tooltip=["Rate"],
 ).properties(
-    title=f"{cancer_filter} mortality rates for {'males' if sex_filter == 'Male' else 'females'} in {year_filter}",
+    title=f"Mortality rates for {cancer_filter} for {'all patients' if sex_filter == 'All' else ('males' if sex_filter == 'Male' else 'females')} between {year_filter[0]} and {year_filter[1]}",
 )
 ### P2.5 ###
 
