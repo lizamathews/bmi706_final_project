@@ -62,7 +62,7 @@ with top_expander:
 year_filter = st.slider(label = 'Year', 
                         min_value = df['Year'].min().item(), 
                         max_value = df['Year'].max().item(),
-                        value = 2007, step = 1)
+                        value = (2007,2009), step = 1)
 # Subset the dataframe for the year of interest
 subset = df[df["Year"] == year_filter]
 
@@ -86,8 +86,8 @@ subset = subset[subset['Cause of death'] == cancer_filter]
 # Line chart section
 #####
 chart = alt.Chart(subset).mark_line().encode(
-    x=alt.X("Year"),
-    y=alt.Y("Deaths")
+    x=alt.X("Year:Q"),
+    y=alt.Y("Deaths:Q")
     #color=alt.Color("Rate:Q", scale=alt.Scale(type='log', domain=(0.01,1000), clamp=True), title="Mortality #rate per 100k"),
     #tooltip=["Rate"],
 ).properties(
