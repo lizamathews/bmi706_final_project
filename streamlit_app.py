@@ -86,7 +86,7 @@ subset = subset[subset['Cause of death'] == cancer_filter]
 # Line chart section
 #####
 chart = alt.Chart(subset).mark_line().encode(
-    x=alt.X("Year:Q"),
+    x=alt.X("Year:N"),
     y=alt.Y("Deaths:Q")
     #color=alt.Color("Rate:Q", scale=alt.Scale(type='log', domain=(0.01,1000), clamp=True), title="Mortality #rate per 100k"),
     #tooltip=["Rate"],
