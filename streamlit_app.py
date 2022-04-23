@@ -64,7 +64,7 @@ year_filter = st.slider(label = 'Year',
                         max_value = df['Year'].max().item(),
                         value = (2007,2009), step = 1)
 # Subset the dataframe for the year of interest
-subset = df[df["Year"] == year_filter]
+subset = df[df["Year"].isin(year_filter) & df["Year"].between(year_filter[0],year_filter[1])]
 
 # The sex filter
 sex_filter = st.radio(label = 'Sex', options = ('All', 'Female', 'Male'), index = 0)
