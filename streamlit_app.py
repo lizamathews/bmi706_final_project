@@ -1,6 +1,7 @@
 import altair as alt
 import pandas as pd
 import streamlit as st
+import numpy as np
 
 @st.cache
 def load_data():
@@ -10,3 +11,12 @@ def load_data():
     return cancer_df
 
 df = load_data()
+
+
+
+
+
+st.write("## BMI 706 Final Project")
+st.write("### Team Members:")
+
+
