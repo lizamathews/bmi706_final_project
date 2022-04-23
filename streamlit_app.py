@@ -31,18 +31,20 @@ st.write("#### Team Members: Liza Mathews, Renhao Luo, Sean Bai, Danny Jomaa")
 image_benign = "data/benign_tumor.png"
 image_malig  = "data/malignant_tumor.png"
 
-top_expander = st.expander("Expand", expanded = True)
+top_expander = st.expander("Overview of Benign and Malignant Neoplasms", expanded = True)
 with top_expander:
     # A subheader in the expander
     st.subheader("Information about malignant neoplasms")
     # Create two columns so we can describe benign vs. malignant neoplasms
     col1,col2 = st.columns(2)
     benign = Image.open(image_benign)
-    col1.header("Benign")
-    col1.image(benign, use_column_width = True)
+    col1.caption("Benign")
+    col1.image(benign, width = 15)
+    col1.text("Description of benign neoplasms...")
     malig  = Image.open(image_malig)
-    col2.header("Malignant")
-    col2.image(malig, use_column_width = True)
+    col2.caption("Malignant")
+    col2.image(malig, width = 15)
+    col2.text("Description of malignant neoplasms...")
 
 
 
