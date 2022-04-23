@@ -64,7 +64,7 @@ year_filter = st.slider(label = 'Year',
                         max_value = df['Year'].max().item(),
                         value = (2007,2009), step = 1)
 # Subset the dataframe for the year of interest
-subset = df[df["Year"].isin(year_filter) & df["Year"].between(year_filter[0],year_filter[1])]
+subset = df[df["Year"].between(year_filter[0],year_filter[1])]
 
 # The sex filter
 sex_filter = st.radio(label = 'Sex', options = ('All', 'Female', 'Male'), index = 0)
@@ -85,7 +85,11 @@ subset = subset[subset['Cause of death'] == cancer_filter]
 ##### 
 # Line chart section
 #####
-chart = alt.Chart(subset).mark_line().encode(
+
+# Creating the data for the line chart
+lc_dat = subset.groupby(['Year', 'Cause of death']).sum().reset_index()
+
+chart = alt.Chart(lc_dat).mark_line().encode(
     x=alt.X("Year:N"),
     y=alt.Y("Deaths:Q")
     #color=alt.Color("Rate:Q", scale=alt.Scale(type='log', domain=(0.01,1000), clamp=True), title="Mortality #rate per 100k"),
