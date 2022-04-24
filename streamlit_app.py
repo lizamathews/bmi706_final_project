@@ -62,7 +62,8 @@ with top_expander:
 year_filter = st.slider(label = 'Year', 
                         min_value = df['Year'].min().item(), 
                         max_value = df['Year'].max().item(),
-                        value = (2007,2009), step = 1)
+                        value = (2007,2009), step = 1,
+                        help="Select the year range.")
 # Subset the dataframe for the year of interest
 subset = df[df["Year"].between(year_filter[0],year_filter[1])]
 
@@ -77,7 +78,8 @@ else:
 # The cancer filter
 cancer_default = 'Breast, unspecified'
 cancer_filter = st.selectbox(label = 'Cancer', options = subset['Cause of death'].unique(),
-                             index = np.where(subset['Cause of death'].unique() == cancer_default)[0][0].item())
+                             index = np.where(subset['Cause of death'].unique() == cancer_default)[0][0].item(), 
+                             help="Select the cancer type.")
 # Subset the dataframe for the cancer of interest
 subset = subset[subset['Cause of death'] == cancer_filter]
 
