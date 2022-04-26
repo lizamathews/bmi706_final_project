@@ -3,6 +3,8 @@ import pandas as pd
 import streamlit as st
 import numpy as np
 from PIL import Image
+from vega_datasets import data
+
 
 ##### 
 # Load the data
@@ -105,6 +107,17 @@ st.altair_chart(chart, use_container_width=True)
 
 
 
+##### 
+# Barplot section
+#####
+
+# The cancer filter
+# cancer_default = 'Breast, unspecified'
+# cancer_filter = st.selectbox(label = 'Cancer', options = subset['Cause of death'].unique(),
+#                              index = np.where(subset['Cause of death'].unique() == cancer_default)[0][0].item(), 
+#                              help="Select the cancer type.")
+# # Subset the dataframe for the cancer of interest
+# subset = subset[subset['Cause of death'] == cancer_filter]
 
 
 
@@ -112,13 +125,50 @@ st.altair_chart(chart, use_container_width=True)
 
 
 
+##### 
+# US Map section
+#####
+width = 600
+height  = 300
+project = 'equirectangular'
+
+states = alt.topo_feature(data.us_10m.url, 'states')
+capitals = data.us_state_capitals.url
+
+# background of US Maps
+background = alt.Chart(states).mark_geoshape(
+    fill='lightgray',
+    stroke='white'
+).properties(
+    title='Map of US Cancer Rates',
+    width=650,
+    height=400
+).project('albersUsa')
 
 
 
+# Copied from Altair, we made not need capitals but state names for hover
 
+# Points and text
+hover = alt.selection(type='single', on='mouseover', nearest=True,
+                      fields=['lat', 'lon'])
 
+base = alt.Chart(capitals).encode(
+    longitude='lon:Q',
+    latitude='lat:Q',
+)
 
+text = base.mark_text(dy=-5, align='right').encode(
+    alt.Text('city', type='nominal'),
+    opacity=alt.condition(~hover, alt.value(0), alt.value(1))
+)
 
+points = base.mark_point().encode(
+    color=alt.value('black'),
+    size=alt.condition(~hover, alt.value(30), alt.value(100))
+).add_selection(hover)
+
+background + points + text
 
 
 
