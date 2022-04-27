@@ -136,7 +136,6 @@ rule = alt.Chart(totdeaths_state).mark_rule(color='orange').encode(
 
 
 
-
 st.altair_chart(bargraph + rule, use_container_width=True)
 
 
@@ -174,7 +173,28 @@ base = alt.Chart(capitals).encode(
 )
 
 
-background
+background # <- this shows the greyed map
+
+
+# Four further dev notes:
+
+# Right now, only background for US map
+
+# the bar graph can now show the subset data from the line graph with deaths total by state as well as a mean deaths line
+
+# Can also consider changing it to death rate by state.. Need to link this to the US map, and that should be it for main tasks
+
+
+
+
+
+
+
+
+
+
+
+
 
 # text = base.mark_text(dy=-5, align='right').encode(
 #     alt.Text('city', type='nominal'),
