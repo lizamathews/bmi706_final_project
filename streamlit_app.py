@@ -60,7 +60,9 @@ with top_expander:
 #####
 # Options section
 #####
+
 # The year filter
+#####
 year_filter = st.slider(label = 'Year', 
                         min_value = df['Year'].min().item(), 
                         max_value = df['Year'].max().item(),
@@ -69,7 +71,9 @@ year_filter = st.slider(label = 'Year',
 # Subset the dataframe for the year of interest
 subset = df[df["Year"].between(year_filter[0],year_filter[1])]
 
+
 # The sex filter
+#####
 sex_filter = st.radio(label = 'Sex', options = ('All', 'Female', 'Male'), index = 0)
 # Subset the dataframe for the sex of interest
 if sex_filter == 'All':
@@ -77,13 +81,17 @@ if sex_filter == 'All':
 else:
     subset = subset[subset['Gender'] == sex_filter]
 
+
 # The cancer filter
+#####
 cancer_default = 'Breast, unspecified'
 cancer_filter = st.selectbox(label = 'Cancer', options = subset['Cause of death'].unique(),
                              index = np.where(subset['Cause of death'].unique() == cancer_default)[0][0].item(), 
                              help="Select the cancer type.")
+
 # Subset the dataframe for the cancer of interest
 subset = subset[subset['Cause of death'] == cancer_filter]
+
 
 
 ##### 
@@ -101,27 +109,35 @@ chart = alt.Chart(lc_dat).mark_line().encode(
 ).properties(
     title=f"Mortality rates for {cancer_filter} for {'all patients' if sex_filter == 'All' else ('males' if sex_filter == 'Male' else 'females')} between {year_filter[0]} and {year_filter[1]}",
 )
+
+
+
 ### P2.5 ###
 
 st.altair_chart(chart, use_container_width=True)
 
 
-
 ##### 
-# Barplot section
+# Interactive Bar Graph Linked to Line chart section (4th task)
 #####
 
-# The cancer filter
-# cancer_default = 'Breast, unspecified'
-# cancer_filter = st.selectbox(label = 'Cancer', options = subset['Cause of death'].unique(),
-#                              index = np.where(subset['Cause of death'].unique() == cancer_default)[0][0].item(), 
-#                              help="Select the cancer type.")
-# # Subset the dataframe for the cancer of interest
-# subset = subset[subset['Cause of death'] == cancer_filter]
+totdeaths_state = subset.groupby("State").sum().reset_index()
+
+bargraph = alt.Chart(totdeaths_state).mark_bar().encode(
+    x="State:N",
+    y="Deaths:Q",
+).properties(
+    title=f"Total Deaths for {cancer_filter} By State for {'all patients' if sex_filter == 'All' else ('males' if sex_filter == 'Male' else 'females')} between {year_filter[0]} and {year_filter[1]}",
+)
+
+rule = alt.Chart(totdeaths_state).mark_rule(color='orange').encode(
+    y='mean(Deaths):Q'
+)
 
 
 
 
+st.altair_chart(bargraph + rule, use_container_width=True)
 
 
 
@@ -146,7 +162,6 @@ background = alt.Chart(states).mark_geoshape(
 ).project('albersUsa')
 
 
-
 # Copied from Altair, we made not need capitals but state names for hover
 
 # Points and text
@@ -158,17 +173,17 @@ base = alt.Chart(capitals).encode(
     latitude='lat:Q',
 )
 
-text = base.mark_text(dy=-5, align='right').encode(
-    alt.Text('city', type='nominal'),
-    opacity=alt.condition(~hover, alt.value(0), alt.value(1))
-)
 
-points = base.mark_point().encode(
-    color=alt.value('black'),
-    size=alt.condition(~hover, alt.value(30), alt.value(100))
-).add_selection(hover)
+background
 
-background + points + text
+# text = base.mark_text(dy=-5, align='right').encode(
+#     alt.Text('city', type='nominal'),
+#     opacity=alt.condition(~hover, alt.value(0), alt.value(1))
+# )
 
+# points = base.mark_point().encode(
+#     color=alt.value('black'),
+#     size=alt.condition(~hover, alt.value(30), alt.value(100))
+# ).add_selection(hover)
 
 
