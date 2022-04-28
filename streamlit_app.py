@@ -18,7 +18,7 @@ def load_data():
        'Cause of death Code', 'Deaths', 'Population', 'Crude Rate'], header=0)
 
     #convert_dict = {"id": int, "Year": int, 
-    "Deaths": int, "Population": int}
+    #"Deaths": int, "Population": int}
     
     #cancer_df = cancer_df.astype(convert_dict)
     # Clean up
