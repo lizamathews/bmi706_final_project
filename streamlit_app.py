@@ -13,20 +13,27 @@ from vega_datasets import data
 def load_data():
 
     # Read in the dataset
-    cancer_df = pd.read_csv("data/all20states.txt", sep="\t")
+    cancer_df = pd.read_csv("data/all20states.txt", sep="\t", names=['Notes', 'State', 'id', 'Year', 'Year Code', 'Age Group',
+       'Age Group Code', 'Gender', 'Gender Code', 'Cause of death',
+       'Cause of death Code', 'Deaths', 'Population', 'Crude Rate'], header=0)
+
+    convert_dict = {"id": int, "Year": int, 
+    "Deaths": int, "Population": int}
+    
+    cancer_df = cancer_df.astype(convert_dict)
+    print(cancer_df.dtypes)
     # Clean up
     # Some columns won't be used so we'll remove them: 
-    cancer_df = cancer_df.drop(columns = ['Notes', 'State Code', 'Year Code', 'Age Group Code', 'Gender Code'])
+    cancer_df_new = cancer_df.drop(columns = ['Notes', 'Year Code', 'Age Group Code', 'Gender Code'])
     # All cancers listed in the 'Cause of death' column are malignant neoplasms - we can 
     # remove this identifier from the individual values
-    causes = cancer_df['Cause of death'].tolist()
+    causes = cancer_df_new['Cause of death'].tolist()
     causes = [i.split(' - ', 1)[0] for i in causes]
-    cancer_df['Cause of death'] = causes
+    cancer_df_new['Cause of death'] = causes
 
-    return cancer_df
+    return cancer_df_new, cancer_df
 
-df = load_data()
-
+df, raw_df = load_data()
 #####
 # Header section
 #####
@@ -56,6 +63,8 @@ with top_expander:
     st.write("The dataset used for this project was obtained from the CDC's Wide-ranging Online Data for Epidemiologic Research (WONDER) [project](https://wonder.cdc.gov/). The portal allows users to query a wide range of public health data published by the CDC for use in independent studies. The data shown below is specifically derived from the Compressed Mortality dataset, which includes mortality and population counts for all U.S. counties from 1968 to 2018. We queried this dataset for mortality rates due to malignant neoplasms between 2007 and 2016 in 20 different states.")
     st.write("Using the options below, you can filter the dataset for ______ to learn more about deaths due to particular neoplasms across the U.S.")
 
+st.subheader("")
+st.success("Data loaded successfully! Please use the visualization options below.")
 
 #####
 # Options section
@@ -63,11 +72,14 @@ with top_expander:
 
 # The year filter
 #####
+
+
 year_filter = st.slider(label = 'Year', 
-                        min_value = df['Year'].min().item(), 
-                        max_value = df['Year'].max().item(),
+                        min_value = df['Year'].min(), 
+                        max_value = df['Year'].max(),
                         value = (2007,2009), step = 1,
                         help="Select the year range.")
+
 # Subset the dataframe for the year of interest
 subset = df[df["Year"].between(year_filter[0],year_filter[1])]
 
@@ -111,9 +123,7 @@ chart = alt.Chart(lc_dat).mark_line().encode(
 )
 
 
-
-### P2.5 ###
-
+# line graph
 st.altair_chart(chart, use_container_width=True)
 
 
@@ -143,67 +153,119 @@ st.altair_chart(bargraph + rule, use_container_width=True)
 ##### 
 # US Map section
 #####
-width = 600
-height  = 300
-project = 'equirectangular'
+
+# TODO
+# Add state name onto the map
+
+
+df2 = df.groupby(['State', 'Year', "id"]).sum().reset_index()
+df2["Rate"] = df2['Deaths']/df2["Population"] * 1000000
+
+width = 900
+height  = 400
+project = 'albersUsa'
+
+year = year_filter[0] # select the year
+# print(f"Showing the data in {year}.")
+df2 = df2[df2['Year']==year]
 
 states = alt.topo_feature(data.us_10m.url, 'states')
 capitals = data.us_state_capitals.url
+
 
 # background of US Maps
 background = alt.Chart(states).mark_geoshape(
     fill='lightgray',
     stroke='white'
-).properties(
-    title='Map of US Cancer Rates',
-    width=650,
-    height=400
-).project('albersUsa')
-
-
-# Copied from Altair, we made not need capitals but state names for hover
+).project(project).properties(
+    width=width,
+    height=height
+)
 
 # Points and text
-hover = alt.selection(type='single', on='mouseover', nearest=True,
-                      fields=['lat', 'lon'])
+# add the capital city for each state
+hover = alt.selection(type='single', on='mouseover', nearest=True, fields=['lat', 'lon'])
 
-base = alt.Chart(capitals).encode(
+capital_base = alt.Chart(capitals).encode(
     longitude='lon:Q',
     latitude='lat:Q',
 )
 
-
-background # <- this shows the greyed map
-
-
-# Four further dev notes:
-
-# Right now, only background for US map
-
-# the bar graph can now show the subset data from the line graph with deaths total by state as well as a mean deaths line
-
-# Can also consider changing it to death rate by state.. Need to link this to the US map, and that should be it for main tasks
+capital_text = capital_base.mark_text(dy=-5, align='right').encode(
+    alt.Text('city', type='nominal')
+    #opacity=alt.condition( alt.value(0), alt.value(1))
+)
 
 
+capital_points = capital_base.mark_point().encode(
+    color=alt.value('black')
+    #size=alt.condition(~hover, alt.value(30), alt.value(100))
+).add_selection(hover)
+
+selector = alt.selection_single(empty="all", fields = ['id'])
+
+chart_base = alt.Chart(states
+    ).properties( 
+        width=width,
+        height=height
+    ).project(project
+    ).add_selection(selector
+    ).transform_lookup(
+        lookup="id", # this id need to be in the groupby dataframe.
+        from_=alt.LookupData(df2, "id", ["Rate", 'State', 'Population', 'Year']),
+    )
 
 
+# color each state by their death rate
+rate_scale = alt.Scale(domain=[df2['Rate'].min(), df2['Rate'].max()])
+rate_color = alt.Color(field="Rate", type="quantitative", scale = rate_scale)
 
+chart_rate = chart_base.mark_geoshape().encode(
+    color = rate_color,
+    tooltip = ["State:N", "Rate:Q"]
+).transform_filter(selector).properties(
+    title=f"Map of US Neoplasms Death Rates in {year}"
+)
 
-
-
-
-
-
-
-
-# text = base.mark_text(dy=-5, align='right').encode(
-#     alt.Text('city', type='nominal'),
-#     opacity=alt.condition(~hover, alt.value(0), alt.value(1))
+# chart2 = alt.vconcat(background + chart_rate + 
+# ).resolve_scale(
+#     color='independent'
 # )
 
-# points = base.mark_point().encode(
-#     color=alt.value('black'),
-#     size=alt.condition(~hover, alt.value(30), alt.value(100))
-# ).add_selection(hover)
+
+st.subheader("The US map for death rate due to neoplasms")
+st.write('Use the lower bond of the slider above to select the year you want to see.')
+
+background + chart_rate # + capital_points + capital_text
 
 
+##### 
+# table section
+#####
+
+# TODO
+# show table in pages, so that the table is not too long. 
+
+st.subheader("Below is the text box to select the cause of death and see detail notes")
+
+
+cause_of_death_input = st.multiselect(
+    label="Cause of Death", 
+    options=subset["Cause of death"].unique(),
+    default=subset["Cause of death"].unique()[0]
+)
+
+table_display_df = subset[(subset["Cause of death"].isin(cause_of_death_input))]
+table_display_df = table_display_df.sort_values(by=["Year"])
+st.table(table_display_df)
+
+
+
+##### 
+# data download
+#####
+
+
+st.subheader("Downloads")
+st.write("To forest an open source community, we provided the raw data we used for this website here. Please click the button below to download.")
+st.download_button("Download the raw data", data=raw_df.to_csv(), file_name="all20states.csv")
