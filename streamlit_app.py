@@ -21,7 +21,6 @@ def load_data():
     "Deaths": int, "Population": int}
     
     cancer_df = cancer_df.astype(convert_dict)
-    print(cancer_df.dtypes)
     # Clean up
     # Some columns won't be used so we'll remove them: 
     cancer_df_new = cancer_df.drop(columns = ['Notes', 'Year Code', 'Age Group Code', 'Gender Code'])
@@ -251,8 +250,8 @@ st.subheader("Below is the text box to select the cause of death and see detail 
 
 cause_of_death_input = st.multiselect(
     label="Cause of Death", 
-    options=subset["Cause of death"].unique(),
-    default=subset["Cause of death"].unique()[0]
+    options=df["Cause of death"].unique(),
+    default=df["Cause of death"].unique()[0]
 )
 
 table_display_df = subset[(subset["Cause of death"].isin(cause_of_death_input))]
