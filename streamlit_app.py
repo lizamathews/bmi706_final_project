@@ -17,20 +17,26 @@ def load_data():
        'Age Group Code', 'Gender', 'Gender Code', 'Cause of death',
        'Cause of death Code', 'Deaths', 'Population', 'Crude Rate'], header=0)
 
-    convert_dict = {"id": int, "Year": int, 
+    #convert_dict = {"id": int, "Year": int, 
     "Deaths": int, "Population": int}
     
-    cancer_df = cancer_df.astype(convert_dict)
+    #cancer_df = cancer_df.astype(convert_dict)
     # Clean up
     # Some columns won't be used so we'll remove them: 
-    cancer_df_new = cancer_df.drop(columns = ['Notes', 'Year Code', 'Age Group Code', 'Gender Code'])
+    #cancer_df_new = cancer_df.drop(columns = ['Notes', 'Year Code', 'Age Group Code', 'Gender Code'])
+    cancer_df = cancer_df.drop(columns = ['Notes', 'Year Code', 'Age Group Code', 'Gender Code'])
+
     # All cancers listed in the 'Cause of death' column are malignant neoplasms - we can 
     # remove this identifier from the individual values
-    causes = cancer_df_new['Cause of death'].tolist()
-    causes = [i.split(' - ', 1)[0] for i in causes]
-    cancer_df_new['Cause of death'] = causes
+    #causes = cancer_df_new['Cause of death'].tolist()
+    causes = cancer_df['Cause of death'].tolist()
 
-    return cancer_df_new, cancer_df
+    causes = [i.split(' - ', 1)[0] for i in causes]
+    #cancer_df_new['Cause of death'] = causes
+    cancer_df['Cause of death'] = causes
+
+    #return cancer_df_new, cancer_df
+    return cancer_df, cancer_df
 
 df, raw_df = load_data()
 #####
@@ -74,13 +80,13 @@ st.success("Data loaded successfully! Please use the visualization options below
 
 
 year_filter = st.slider(label = 'Year', 
-                        min_value = raw_df['Year'].min(), 
-                        max_value = raw_df['Year'].max(),
+                        min_value = df['Year'].min(), 
+                        max_value = df['Year'].max(),
                         value = (2007,2009), step = 1,
                         help="Select the year range.")
 
 # Subset the dataframe for the year of interest
-subset = raw_df[raw_df["Year"].between(year_filter[0],year_filter[1])]
+subset = df[df["Year"].between(year_filter[0],year_filter[1])]
 
 
 # The sex filter
