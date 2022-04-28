@@ -74,13 +74,13 @@ st.success("Data loaded successfully! Please use the visualization options below
 
 
 year_filter = st.slider(label = 'Year', 
-                        min_value = df['Year'].min(), 
-                        max_value = df['Year'].max(),
+                        min_value = raw_df['Year'].min(), 
+                        max_value = raw_df['Year'].max(),
                         value = (2007,2009), step = 1,
                         help="Select the year range.")
 
 # Subset the dataframe for the year of interest
-subset = df[df["Year"].between(year_filter[0],year_filter[1])]
+subset = raw_df[raw_df["Year"].between(year_filter[0],year_filter[1])]
 
 
 # The sex filter
