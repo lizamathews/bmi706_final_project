@@ -3,7 +3,7 @@ import pandas as pd
 import streamlit as st
 import numpy as np
 from PIL import Image
-from vega_datasets import data
+#from vega_datasets import data
 
 
 ##### 
