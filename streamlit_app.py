@@ -4,6 +4,8 @@ import streamlit as st
 import numpy as np
 from PIL import Image
 from vega_datasets import data
+from st_aggrid import AgGrid, GridOptionsBuilder
+from st_aggrid.shared import GridUpdateMode
 
 
 ##### 
@@ -66,18 +68,19 @@ with top_expander:
     col2.write("Malignant neoplasms describe abnormal collections that grow quickly and have the potential to be life-threatening. Malignant tumors often have irregular shapes and borders because they invade surrounding tissue, making them challenging to remove surgically. Depending on the location of the tumor and the extent of growth and spread to other parts of the body, they can be treated with a combination of surgery, radiation, chemotherapy, biological agents, and more. The visualizations shown below use data on deaths due to malignant neoplasms.")
 
     st.write("The dataset used for this project was obtained from the CDC's Wide-ranging Online Data for Epidemiologic Research (WONDER) [project](https://wonder.cdc.gov/). The portal allows users to query a wide range of public health data published by the CDC for use in independent studies. The data shown below is specifically derived from the Compressed Mortality dataset, which includes mortality and population counts for all U.S. counties from 1968 to 2018. We queried this dataset for mortality rates due to malignant neoplasms between 2007 and 2016 in 20 different states.")
-    st.write("Using the options below, you can filter the dataset for ______ to learn more about deaths due to particular neoplasms across the U.S.")
+    st.write("Using the options below, you can filter the dataset to learn more about deaths due to particular neoplasms across the U.S.")
 
-st.subheader("")
-st.success("Data loaded successfully! Please use the visualization options below.")
+st.markdown("---")
+st.success("Data loaded successfully! Please use the options below to customize the visualizations.")
 
 #####
 # Options section
 #####
 
+st.subheader("Visualization Options")
+
 # The year filter
 #####
-
 
 year_filter = st.slider(label = 'Year', 
                         min_value = int(df['Year'].min()), 
@@ -114,69 +117,68 @@ subset = subset[subset['Cause of death'] == cancer_filter]
 ##### 
 # Line chart section
 #####
+st.markdown("---")
+st.subheader("Cancer-Related Deaths by Year")
 
 # Creating the data for the line chart
 lc_dat = subset.groupby(['Year', 'Cause of death']).sum().reset_index()
 
 chart = alt.Chart(lc_dat).mark_line().encode(
     x=alt.X("Year:N"),
-    y=alt.Y("Deaths:Q")
+    y=alt.Y("Deaths:Q", title = "Total Deaths")
     #color=alt.Color("Rate:Q", scale=alt.Scale(type='log', domain=(0.01,1000), clamp=True), title="Mortality #rate per 100k"),
     #tooltip=["Rate"],
 ).properties(
     title=f"Mortality rates for {cancer_filter} for {'all patients' if sex_filter == 'All' else ('males' if sex_filter == 'Male' else 'females')} between {year_filter[0]} and {year_filter[1]}",
 )
 
-
 # line graph
 st.altair_chart(chart, use_container_width=True)
-
 
 ##### 
 # Interactive Bar Graph Linked to Line chart section (4th task)
 #####
+st.markdown("---")
+st.subheader("Cancer-Related Deaths by State")
 
 totdeaths_state = subset.groupby("State").sum().reset_index()
 
 bargraph = alt.Chart(totdeaths_state).mark_bar().encode(
     x="State:N",
-    y="Deaths:Q",
+    y=alt.Y("Deaths:Q", title = "Total Deaths"),
 ).properties(
-    title=f"Total Deaths for {cancer_filter} By State for {'all patients' if sex_filter == 'All' else ('males' if sex_filter == 'Male' else 'females')} between {year_filter[0]} and {year_filter[1]}",
+    title=f"Total deaths for {cancer_filter} by state for {'all patients' if sex_filter == 'All' else ('males' if sex_filter == 'Male' else 'females')} between {year_filter[0]} and {year_filter[1]}",
 )
 
 rule = alt.Chart(totdeaths_state).mark_rule(color='orange').encode(
     y='mean(Deaths):Q'
 )
 
-
-
 st.altair_chart(bargraph + rule, use_container_width=True)
-
-
+st.write("_Note: The orange line shows the mean number of total deaths for the selected time period._")
 
 ##### 
 # US Map section
 #####
+st.markdown("---")
+st.subheader("U.S. Map of Cancer-Related Death Rates per Million")
 
 # TODO
 # Add state name onto the map
 
-
-df2 = df.groupby(['State', 'Year', "id"]).sum().reset_index()
-df2["Rate"] = df2['Deaths']/df2["Population"] * 1000000
+df2 = df.groupby(['State', 'Year', 'id']).sum().reset_index()
+df2['Rate'] = df2['Deaths']/df2['Population'] * 1000000
 
 width = 900
 height  = 400
 project = 'albersUsa'
 
-year = year_filter[0] # select the year
+#year = year_filter[0] # select the year
 # print(f"Showing the data in {year}.")
-df2 = df2[df2['Year']==year]
+df2 = df2[df2["Year"].between(year_filter[0],year_filter[1])]
 
 states = alt.topo_feature(data.us_10m.url, 'states')
 capitals = data.us_state_capitals.url
-
 
 # background of US Maps
 background = alt.Chart(states).mark_geoshape(
@@ -201,7 +203,6 @@ capital_text = capital_base.mark_text(dy=-5, align='right').encode(
     #opacity=alt.condition( alt.value(0), alt.value(1))
 )
 
-
 capital_points = capital_base.mark_point().encode(
     color=alt.value('black')
     #size=alt.condition(~hover, alt.value(30), alt.value(100))
@@ -220,16 +221,15 @@ chart_base = alt.Chart(states
         from_=alt.LookupData(df2, "id", ["Rate", 'State', 'Population', 'Year']),
     )
 
-
 # color each state by their death rate
 rate_scale = alt.Scale(domain=[df2['Rate'].min(), df2['Rate'].max()])
-rate_color = alt.Color(field="Rate", type="quantitative", scale = rate_scale)
+rate_color = alt.Color(field="Rate", type="quantitative", scale = rate_scale, title = "Rate (deaths per 1 million)")
 
 chart_rate = chart_base.mark_geoshape().encode(
     color = rate_color,
     tooltip = ["State:N", "Rate:Q"]
 ).transform_filter(selector).properties(
-    title=f"Map of US Neoplasms Death Rates in {year}"
+    title=f"Map of deaths per million individuals for {cancer_filter} for {'all patients' if sex_filter == 'All' else ('males' if sex_filter == 'Male' else 'females')} between {year_filter[0]} and {year_filter[1]}",
 )
 
 # chart2 = alt.vconcat(background + chart_rate + 
@@ -237,40 +237,51 @@ chart_rate = chart_base.mark_geoshape().encode(
 #     color='independent'
 # )
 
-
-st.subheader("The US map for death rate due to neoplasms")
-st.write('Use the lower bond of the slider above to select the year you want to see.')
-
 background + chart_rate # + capital_points + capital_text
-
 
 ##### 
 # table section
-#####
+##### 
+st.markdown("---")
+st.subheader("Viewing the Original Data")
+st.write("Use the box below to select a cause of death and see detailed notes. Use the sidebar on the right to filter the dataset and display columns of interest.")
 
-# TODO
-# show table in pages, so that the table is not too long. 
+def aggrid_interactive_table(df: pd.DataFrame):
 
-st.subheader("Below is the text box to select the cause of death and see detail notes")
+    options = GridOptionsBuilder.from_dataframe(
+        df, enableRowGroup=True, enableValue=True, enablePivot=True
+    )
 
+    options.configure_side_bar()
+
+    options.configure_selection("single")
+    selection = AgGrid(
+        df,
+        enable_enterprise_modules=True,
+        gridOptions=options.build(),
+        theme="light",
+        update_mode=GridUpdateMode.MODEL_CHANGED,
+        allow_unsafe_jscode=True,
+    )
+
+    return selection
 
 cause_of_death_input = st.multiselect(
-    label="Cause of Death", 
+    label="", 
     options=df["Cause of death"].unique(),
     default=df["Cause of death"].unique()[0]
 )
 
-table_display_df = subset[(subset["Cause of death"].isin(cause_of_death_input))]
-table_display_df = table_display_df.sort_values(by=["Year"])
-st.table(table_display_df)
+table_display_df = df[(df["Cause of death"].isin(cause_of_death_input))]
+table_display_df = table_display_df.drop(columns = ['id', 'Cause of death Code', 'Crude Rate'])
+table_display_df = table_display_df.sort_values(by=["Cause of death", "State", "Year", "Age Group", "Gender"])
 
-
+selection = aggrid_interactive_table(df=table_display_df)
 
 ##### 
 # data download
 #####
-
-
-st.subheader("Downloads")
-st.write("To forest an open source community, we provided the raw data we used for this website here. Please click the button below to download.")
+st.markdown("---")
+st.subheader("Data Download")
+st.write("To foster an open source community, we have provided the raw data we used for this website here. Please click the button below to start the download.")
 st.download_button("Download the raw data", data=raw_df.to_csv(), file_name="all20states.csv")
