@@ -82,7 +82,7 @@ st.success("Data loaded successfully! Please use the visualization options below
 year_filter = st.slider(label = 'Year', 
                         min_value = df['Year'].min(), 
                         max_value = df['Year'].max(),
-                        value = (2007,2009), step = 1,
+                        value = (2007,2009), step = np.int64(1),
                         help="Select the year range.")
 
 # Subset the dataframe for the year of interest
