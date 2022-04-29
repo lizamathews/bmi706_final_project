@@ -4,8 +4,8 @@ import streamlit as st
 import numpy as np
 from PIL import Image
 from vega_datasets import data
-from st_aggrid import AgGrid, GridOptionsBuilder
-from st_aggrid.shared import GridUpdateMode
+from streamlit_aggrid import AgGrid, GridOptionsBuilder
+from streamlit_aggrid.shared import GridUpdateMode
 
 
 ##### 
