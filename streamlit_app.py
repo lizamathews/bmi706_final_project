@@ -89,29 +89,40 @@ year_filter = st.slider(label = 'Year',
                         value = (2007,2009), step = int(1),
                         help="Select the year range.")
 
-# Subset the dataframe for the year of interest
-subset = df[df["Year"].between(year_filter[0],year_filter[1])]
+subset = df
+
+
+
 
 
 # The sex filter
 #####
-sex_filter = st.radio(label = 'Sex', options = ('All', 'Female', 'Male'), index = 0)
+sex_filter = st.radio(label = 'Sex', options = ('All', 'Female', 'Male'), index = 0, help = "Select sex.")
+
+
+
+# The cancer filter
+#####
+# cancer_default = 'Breast, unspecified'
+cancer_filter = st.selectbox(label = 'Cancer', 
+    options = sorted(list(set(subset['Cause of death']))),
+    index = sorted(list(set(subset['Cause of death']))).index('Breast, unspecified'), 
+    help="Select the cancer type."
+)
+
+
+# Subset the dataframe for the cancer of interest
+subset = subset[subset['Cause of death'] == cancer_filter]
+
+# Subset the dataframe for the year of interest
+subset = subset[subset["Year"].between(year_filter[0],year_filter[1])]
+
+
 # Subset the dataframe for the sex of interest
 if sex_filter == 'All':
     subset = subset
 else:
     subset = subset[subset['Gender'] == sex_filter]
-
-
-# The cancer filter
-#####
-cancer_default = 'Breast, unspecified'
-cancer_filter = st.selectbox(label = 'Cancer', options = subset['Cause of death'].unique(),
-                             index = np.where(subset['Cause of death'].unique() == cancer_default)[0][0].item(), 
-                             help="Select the cancer type.")
-
-# Subset the dataframe for the cancer of interest
-subset = subset[subset['Cause of death'] == cancer_filter]
 
 
 
