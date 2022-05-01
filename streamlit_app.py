@@ -176,10 +176,8 @@ st.markdown("---")
 st.subheader("U.S. Map of Cancer-Related Death Rates per Million")
 st.write("Note: grey area represents no data.")
 
-# TODO
-# Add state name onto the map
 
-df2 = df.groupby(['State', 'Year', 'id']).sum().reset_index()
+df2 = subset.groupby(['State', 'Year', 'id']).sum().reset_index()
 df2['Rate'] = df2['Deaths']/df2['Population'] * 1000000
 
 width = 900
