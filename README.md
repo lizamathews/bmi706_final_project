@@ -12,7 +12,7 @@ The dataset includes the following 10 attributes: State, State population, Year,
 The CDC WONDER online database offers a rich ad-hoc query system for analyzing public health data. Within this database, we will be using the Compressed Mortality dataset, which includes mortality and population counts for all U.S. counties for the years 1968 to 2018. 
 
 ### Exploratory Visualization
-For this project, we will query the data regarding the malignant neoplasm from the CDC-WONDER: Mortality website， and prepare a web dashboard for the users to interact with the data and extract useful information for different purposes. Based on the queried data described in the Dataset Summary section above, we could answer various questions regarding the dataset. Some of the questions are listed here: 
+For this project, we will query the data regarding the malignant neoplasm from the CDC-WONDER: Mortality website, and prepare a web dashboard for the users to interact with the data and extract useful information for different purposes. Based on the queried data described in the Dataset Summary section above, we could answer various questions regarding the dataset. Some of the questions are listed here: 
 How does the number of deaths due to malignant neoplasm change over the years?
 Are males or females affected the most by the malignant neoplasm?
 Which state has the highest/lowest number of deaths in a given year? 

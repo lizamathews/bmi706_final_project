@@ -52,9 +52,10 @@ st.write("###### Team Members: Liza Mathews, Renhao Luo, Sean Bai, Danny Jomaa")
 image_benign = "data/benign_tumor.png"
 image_malig  = "data/malignant_tumor.png"
 
-top_expander = st.expander("Overview of Benign and Malignant Neoplasms", expanded = True)
+top_expander = st.expander("What are neoplasms?", expanded = True)
 with top_expander:
     # A subheader in the expander
+    st.subheader("Overview of Benign and Malignant Neoplasms")
     st.write("The visualizations below describe data on deaths due to malignant neoplasms in the United States. By understanding trends in deaths due to malignant neoplasms, we can identify diseases that we have been successful in treating and diseases that require further research. We have included a primer on benign and malignant neoplasms below to highlight the importance of studying trends in malignant neoplasms.")
     # Create two columns so we can describe benign vs. malignant neoplasms
     col1,col2 = st.columns(2)
@@ -66,7 +67,7 @@ with top_expander:
     col2.subheader("Malignant")
     col2.image(malig, width = 300)
     col2.write("Malignant neoplasms describe abnormal collections that grow quickly and have the potential to be life-threatening. Malignant tumors often have irregular shapes and borders because they invade surrounding tissue, making them challenging to remove surgically. Depending on the location of the tumor and the extent of growth and spread to other parts of the body, they can be treated with a combination of surgery, radiation, chemotherapy, biological agents, and more. The visualizations shown below use data on deaths due to malignant neoplasms.")
-
+    st.subheader("Dataset Description")
     st.write("The dataset used for this project was obtained from the CDC's Wide-ranging Online Data for Epidemiologic Research (WONDER) [project](https://wonder.cdc.gov/). The portal allows users to query a wide range of public health data published by the CDC for use in independent studies. The data shown below is specifically derived from the Compressed Mortality dataset, which includes mortality and population counts for all U.S. counties from 1968 to 2018. We queried this dataset for mortality rates due to malignant neoplasms between 2007 and 2016 in 20 different states.")
     st.write("Using the options below, you can filter the dataset to learn more about deaths due to particular neoplasms across the U.S.")
 
@@ -88,29 +89,40 @@ year_filter = st.slider(label = 'Year',
                         value = (2007,2009), step = int(1),
                         help="Select the year range.")
 
-# Subset the dataframe for the year of interest
-subset = df[df["Year"].between(year_filter[0],year_filter[1])]
+subset = df
+
+
+
 
 
 # The sex filter
 #####
-sex_filter = st.radio(label = 'Sex', options = ('All', 'Female', 'Male'), index = 0)
+sex_filter = st.radio(label = 'Sex', options = ('All', 'Female', 'Male'), index = 0, help = "Select sex.")
+
+
+
+# The cancer filter
+#####
+# cancer_default = 'Breast, unspecified'
+cancer_filter = st.selectbox(label = 'Cancer', 
+    options = sorted(list(set(subset['Cause of death']))),
+    index = sorted(list(set(subset['Cause of death']))).index('Breast, unspecified'), 
+    help="Select the cancer type."
+)
+
+
+# Subset the dataframe for the cancer of interest
+subset = subset[subset['Cause of death'] == cancer_filter]
+
+# Subset the dataframe for the year of interest
+subset = subset[subset["Year"].between(year_filter[0],year_filter[1])]
+
+
 # Subset the dataframe for the sex of interest
 if sex_filter == 'All':
     subset = subset
 else:
     subset = subset[subset['Gender'] == sex_filter]
-
-
-# The cancer filter
-#####
-cancer_default = 'Breast, unspecified'
-cancer_filter = st.selectbox(label = 'Cancer', options = subset['Cause of death'].unique(),
-                             index = np.where(subset['Cause of death'].unique() == cancer_default)[0][0].item(), 
-                             help="Select the cancer type.")
-
-# Subset the dataframe for the cancer of interest
-subset = subset[subset['Cause of death'] == cancer_filter]
 
 
 
@@ -162,11 +174,10 @@ st.write("_Note: The orange line shows the mean number of total deaths for the s
 #####
 st.markdown("---")
 st.subheader("U.S. Map of Cancer-Related Death Rates per Million")
+st.write("Note: grey area represents no data.")
 
-# TODO
-# Add state name onto the map
 
-df2 = df.groupby(['State', 'Year', 'id']).sum().reset_index()
+df2 = subset.groupby(['State', 'Year', 'id']).sum().reset_index()
 df2['Rate'] = df2['Deaths']/df2['Population'] * 1000000
 
 width = 900
@@ -189,26 +200,10 @@ background = alt.Chart(states).mark_geoshape(
     height=height
 )
 
-# Points and text
-# add the capital city for each state
+
 hover = alt.selection(type='single', on='mouseover', nearest=True, fields=['lat', 'lon'])
-
-capital_base = alt.Chart(capitals).encode(
-    longitude='lon:Q',
-    latitude='lat:Q',
-)
-
-capital_text = capital_base.mark_text(dy=-5, align='right').encode(
-    alt.Text('city', type='nominal')
-    #opacity=alt.condition( alt.value(0), alt.value(1))
-)
-
-capital_points = capital_base.mark_point().encode(
-    color=alt.value('black')
-    #size=alt.condition(~hover, alt.value(30), alt.value(100))
-).add_selection(hover)
-
 selector = alt.selection_single(empty="all", fields = ['id'])
+
 
 chart_base = alt.Chart(states
     ).properties( 
@@ -232,12 +227,40 @@ chart_rate = chart_base.mark_geoshape().encode(
     title=f"Map of deaths per million individuals for {cancer_filter} for {'all patients' if sex_filter == 'All' else ('males' if sex_filter == 'Male' else 'females')} between {year_filter[0]} and {year_filter[1]}",
 )
 
-# chart2 = alt.vconcat(background + chart_rate + 
-# ).resolve_scale(
-#     color='independent'
-# )
+# Points and text
+# add the capital city for each state
 
-background + chart_rate # + capital_points + capital_text
+capital_base = alt.Chart(capitals).encode(
+    longitude='lon:Q',
+    latitude='lat:Q',
+)
+
+capital_text = capital_base.mark_text(dy=-5, align='right').encode(
+    alt.Text('city', type='nominal'),
+    opacity=alt.condition(~hover, alt.value(0), alt.value(1))
+).add_selection(hover)
+
+capital_points = capital_base.mark_point().encode(
+    color=alt.value('black'),
+    size=alt.condition(~hover, alt.value(30), alt.value(100))
+)
+
+captial_color = alt.condition(~selector, alt.value('lightgray'), alt.value("white"))
+opacity = alt.condition(~selector, alt.value(0.5), alt.value(0.1))
+
+chart_rate_captial = chart_base.mark_geoshape().encode(
+    color = "Population:Q",
+    opacity=opacity,
+).transform_filter(selector).properties(
+    title=f"Map of population for all 20 states")
+
+chart2 = alt.vconcat(background + capital_points + capital_text + chart_rate_captial , background + chart_rate
+).resolve_scale(
+    color='independent'
+)
+
+chart2
+# background + chart_rate # + capital_points + capital_text
 
 ##### 
 # table section
